@@ -1,40 +1,42 @@
 function functionStartAlert() {
-    const alertDiv = document.createElement("div");
-    alertDiv.setAttribute('id', 'alertDiv');
+  const alertDiv = document.createElement("div");
+  alertDiv.setAttribute("id", "alertDiv");
 
-    let firstDiv = document.querySelector('body').firstElementChild;
-    document.body.insertBefore(alertDiv, firstDiv);
+  let firstDiv = document.querySelector("body").firstElementChild;
+  document.body.insertBefore(alertDiv, firstDiv);
 
-    let alertText = document.createElement("p");
-    alertText.innerHTML = 'Hub Scraper started<br>It may take some time!<br>This alert will disappear when it is finised.<br><div class="cssLoader"></div>';
+  let alertText = document.createElement("p");
+  alertText.innerHTML =
+    'Hub Scraper started<br>It may take some time!<br>This alert will disappear when it is finised.<br><div class="cssLoader"></div>';
 
-    alertDiv.appendChild(alertText);
-    alertText.style.margin = '0';
-    alertDiv.style.fontFamily = '"Open Sans", sans-serif';
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '2em';
-    alertDiv.style.right = '1em';
-    alertDiv.style.zIndex = '999';
-    alertDiv.style.textAlign = 'center';
-    alertDiv.style.borderRadius = '2px';
-    alertDiv.style.minHeight = '48px';
-    alertDiv.style.lineHeight = '1.5em';
-    alertDiv.style.padding = '1.5em';
-    alertDiv.style.boxShadow = '0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12), 0 3px 1px -2px rgba(0, 0, 0, .2)';
-    alertDiv.style.maxHeight = '150px';
-    alertDiv.style.maxWidth = '400px';
-    alertDiv.style.fontSize = '15px';
-    alertDiv.style.color = 'white';
-    alertDiv.style.backgroundColor = 'rgb(163, 190, 140)';
-    alertDiv.style.cursor = 'pointer';
-    alertDiv.style.transition = 'opacity 3s ease-in-out';
-    alertDiv.style.opacity = '1';
+  alertDiv.appendChild(alertText);
+  alertText.style.margin = "0";
+  alertDiv.style.fontFamily = '"Open Sans", sans-serif';
+  alertDiv.style.position = "fixed";
+  alertDiv.style.top = "2em";
+  alertDiv.style.right = "1em";
+  alertDiv.style.zIndex = "999";
+  alertDiv.style.textAlign = "center";
+  alertDiv.style.borderRadius = "2px";
+  alertDiv.style.minHeight = "48px";
+  alertDiv.style.lineHeight = "1.5em";
+  alertDiv.style.padding = "1.5em";
+  alertDiv.style.boxShadow =
+    "0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12), 0 3px 1px -2px rgba(0, 0, 0, .2)";
+  alertDiv.style.maxHeight = "150px";
+  alertDiv.style.maxWidth = "400px";
+  alertDiv.style.fontSize = "15px";
+  alertDiv.style.color = "white";
+  alertDiv.style.backgroundColor = "rgb(163, 190, 140)";
+  alertDiv.style.cursor = "pointer";
+  alertDiv.style.transition = "opacity 3s ease-in-out";
+  alertDiv.style.opacity = "1";
 
-    alertDiv.addEventListener('click', () => {
-        alertDiv.remove();
-    });
+  alertDiv.addEventListener("click", () => {
+    alertDiv.remove();
+  });
 
-    var css = `.cssLoader {
+  var css = `.cssLoader {
         border: 4px solid #f3f3f3;
         border-top: 4px solid #3498db;
         border-radius: 50%;
@@ -49,277 +51,246 @@ function functionStartAlert() {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }`,
-        head = document.head || document.getElementsByTagName('head')[0],
-        style = document.createElement('style');
-    head.appendChild(style);
-    style.type = 'text/css';
-    style.appendChild(document.createTextNode(css));
+    head = document.head || document.getElementsByTagName("head")[0],
+    style = document.createElement("style");
+  head.appendChild(style);
+  style.type = "text/css";
+  style.appendChild(document.createTextNode(css));
 }
 
 function clearAlert() {
-    let alertDiv = document.getElementById('alertDiv');
-    if (alertDiv) {
-        alertDiv.style.transition = 'opacity 1s ease-in-out';
-        alertDiv.style.opacity = '0';
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 3000);
-    }
+  let alertDiv = document.getElementById("alertDiv");
+  if (alertDiv) {
+    alertDiv.style.opacity = "0";
+    setTimeout(() => alertDiv.remove(), 1000);
+  }
 }
 
 function isClientHubPage() {
-    const pattern = /^hub\.g5marketingcloud\.com\/admin\/clients\/[a-z0-9-]+$/;
-    const currentURL = window.location.href.replace(/^(https?:\/\/)/, '');
-    return pattern.test(currentURL);
+  const pattern = /^hub\.g5marketingcloud\.com\/admin\/clients\/[a-z0-9-]+$/;
+  const currentURL = window.location.href.replace(/^(https?:\/\/)/, "");
+  return pattern.test(currentURL);
 }
 
 let clientData;
 if (isClientHubPage()) {
-    clientData = {
-        name: document.querySelector('div.h-card > h2 > a.u-uid').innerText,
-        urn: document.querySelector('.p-g5-urn').innerText,
-        domainType: document.querySelector('.p-g5-domain-type').innerText,
-        vertical: document.querySelector('.p-g5-vertical').innerText,
-    };
-    if (clientData.domainType.toLowerCase().includes('single')) {
-        clientData.domain = document.querySelector('.u-g5-domain').innerText;
-    }
+  clientData = {
+    name: document.querySelector("div.h-card > h2 > a.u-uid").innerText,
+    urn: document.querySelector(".p-g5-urn").innerText,
+    domainType: document.querySelector(".p-g5-domain-type").innerText,
+    vertical: document.querySelector(".p-g5-vertical").innerText,
+  };
+  if (clientData.domainType.toLowerCase().includes("single")) {
+    clientData.domain = document.querySelector(".u-g5-domain").innerText;
+  }
 }
 
 async function fetchDataRecursive() {
-    let pageIteration = 1;
-    let locationsJsonUrl = `https://hub.g5marketingcloud.com/admin/clients/${clientData.urn}/locations.json?order=name_asc&page=${pageIteration}`;
+  let pageIteration = 1;
+  let locationsJsonUrl = `https://hub.g5marketingcloud.com/admin/clients/${clientData.urn}/locations.json?order=name_asc&page=${pageIteration}`;
 
-    async function getJsonData(url) {
-        let fetchResult = await fetch(url);
-        if (!fetchResult.ok) {
-            throw new Error(`Error fetching data from ${url}: ${fetchResult.status} ${fetchResult.statusText}`);
-        }
-        let json = await fetchResult.json();
-        return json;
+  async function getJsonData(url) {
+    let fetchResult = await fetch(url);
+    if (!fetchResult.ok) {
+      throw new Error(
+        `Error fetching data from ${url}: ${fetchResult.status} ${fetchResult.statusText}`
+      );
     }
+    let json = await fetchResult.json();
+    return json;
+  }
 
-    async function fetchAndStoreData(url, jsonData = [], pageIteration) {
-        try {
-            let json = await getJsonData(url);
-            jsonData.push(...json);
-            pageIteration++;
-            let nextUrl = `https://hub.g5marketingcloud.com/admin/clients/${clientData.urn}/locations.json?order=name_asc&page=${pageIteration}`;
-            return fetchAndStoreData(nextUrl, jsonData, pageIteration);
-        } catch (error) {
-            console.error(error);
-        }
-        return jsonData;
+  async function fetchAndStoreData(url, jsonData = [], pageIteration) {
+    try {
+      let json = await getJsonData(url);
+      jsonData.push(...json);
+      pageIteration++;
+      let nextUrl = `https://hub.g5marketingcloud.com/admin/clients/${clientData.urn}/locations.json?order=name_asc&page=${pageIteration}`;
+      return fetchAndStoreData(nextUrl, jsonData, pageIteration);
+    } catch (error) {
+      console.error(error);
     }
-    return fetchAndStoreData(locationsJsonUrl, [], pageIteration);
+    return jsonData;
+  }
+  return fetchAndStoreData(locationsJsonUrl, [], pageIteration);
 }
 
 function removeSpecialChars(str) {
-    str = str.replace(/[^A-Za-z0-9\/]+$/g, "");
-    str = str.replace(/[^A-Za-z0-9\/]/g, "-");
-    str = str.replace("--", "-");
-    return str;
+  return str
+    .replace(/[^A-Za-z0-9/]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function determineVertical() {
-    let vertical = clientData.vertical;
+  let vertical = clientData.vertical;
 
-    switch (true) {
-        case vertical.includes('Apartments'):
-            return 'apartments';
-        case vertical.includes('Senior'):
-            return 'senior-living';
-        case vertical.includes('Storage'):
-            return 'self-storage';
-        default:
-            console.error('Was not able to detect a valid vertical!');
-            return 'Was not able to detect a valid vertical!';
-    }
+  switch (true) {
+    case vertical.includes("Apartments"):
+      return "apartments";
+    case vertical.includes("Senior"):
+      return "senior-living";
+    case vertical.includes("Storage"):
+      return "self-storage";
+    default:
+      console.error("Was not able to detect a valid vertical!");
+      return "Was not able to detect a valid vertical!";
+  }
 }
 
 function determineDomainType() {
-    let domainType = clientData.domainType;
-    if (domainType === 'SingleDomainClient') {
-        return 'singleDomain';
-    } else if (domainType === 'MultiDomainClient') {
-        return 'multiDomain';
-    } else {
-        console.error('Unable to determine domain type!');
-        return 'Unable to determine domain type!'
-    }
+  let domainType = clientData.domainType;
+  if (domainType === "SingleDomainClient") {
+    return "singleDomain";
+  } else if (domainType === "MultiDomainClient") {
+    return "multiDomain";
+  } else {
+    console.error("Unable to determine domain type!");
+    return "Unable to determine domain type!";
+  }
 }
 
 function extractTLD(domain) {
-    const regex = /\.([^.\/]+)$/;
-    const match = domain.match(regex);
-    if (match && match[1]) {
-        return match[1];
-    }
-    return '';
+  const regex = /\.([^.\/]+)$/;
+  const match = domain.match(regex);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return "";
 }
 
 function extractDomainName(url) {
-    const regex = /^(?:https?:\/\/)?(?:[^:\/\n]+\.)?([^:\/\n.]+\.[^:\/\n.]+)(?:\/|$)/i;
-    const match = url.match(regex);
-    if (match && match[1]) {
-        const domainWithTLD = match[1];
-        const dotIndex = domainWithTLD.lastIndexOf('.');
-        if (dotIndex !== -1) {
-            return domainWithTLD.slice(0, dotIndex);
-        }
-        return domainWithTLD;
+  const regex =
+    /^(?:https?:\/\/)?(?:[^:\/\n]+\.)?([^:\/\n.]+\.[^:\/\n.]+)(?:\/|$)/i;
+  const match = url.match(regex);
+  if (match && match[1]) {
+    const domainWithTLD = match[1];
+    const dotIndex = domainWithTLD.lastIndexOf(".");
+    if (dotIndex !== -1) {
+      return domainWithTLD.slice(0, dotIndex);
     }
-    return '';
+    return domainWithTLD;
+  }
+  return "";
 }
 
 function extractSubdomain(url) {
-    const regex = /^(?:https?:\/\/)?([^:\/\n]+\.)?([^:\/\n]+\.[^:\/\n]+)\b/i;
-    const match = url.match(regex);
-    if (match && match[1]) {
-        return match[1].replace('.', '');
-    }
-    return '';
+  const regex = /^(?:https?:\/\/)?([^:\/\n]+\.)?([^:\/\n]+\.[^:\/\n]+)\b/i;
+  const match = url.match(regex);
+  if (match && match[1]) {
+    return match[1].replace(".", "");
+  }
+  return "";
 }
 
-function parseData(jsonData) {
-    let locationsArr = [];
-    if (determineDomainType() === 'multiDomain') {
-        jsonData.forEach((location) => {
-            let locationInfo = {
-                name: location.name,
-                internalName: location.internal_branded_name,
-                status: location.status,
-                url: location.naked_domain,
-                isCorp: location.corporate,
-                customVertical: location.custom_vertical
-            };
-            locationsArr.push(locationInfo);
-        });
-        return locationsArr;
-    } else if (determineDomainType() === 'singleDomain') {
-        let domain = clientData.domain;
-        jsonData.forEach((location) => {
-            let locationInfo = {
-                name: location.name,
-                internalName: location.internal_branded_name,
-                status: location.status,
-                url: domain,
-                isCorp: location.corporate,
-                customVertical: location.custom_vertical
-            };
-            if (location.custom_vertical) {
-                locationInfo.path = removeSpecialChars(`${location.custom_vertical}/${location.state}/${location.city}/${location.custom_slug}`.toLowerCase());
-            } else {
-                locationInfo.path = removeSpecialChars(`${determineVertical()}/${location.state}/${location.city}/${location.custom_slug}`.toLowerCase());
-            }
-            locationsArr.push(locationInfo);
-        });
-        return locationsArr;
-    }
-}
+function parseData(jsonData, domainType, vertical, domain) {
+  return jsonData.map((location) => {
+    const base = {
+      name: location.name,
+      internalName: location.internal_branded_name,
+      status: location.status,
+      isCorp: location.corporate,
+      customVertical: location.custom_vertical,
+    };
 
-function buildLiveUrl(url, path, corp) {
-    if (determineDomainType() === 'singleDomain') {
-        if (path.length <= 0 || corp) {
-            return `${url}`
-        } else {
-            return `${url}/${path}`
-        }
-    } else if (determineDomainType() === 'multiDomain') {
-        if (url == null || url == undefined) {
-            return 'undefined'
-        } else {
-            let urlParts = url.split('.');
-            if (urlParts.length < 3 && !url.includes('www.')) {
-                return `https://www.${url}`
-            } else if (urlParts.length >= 3) {
-                return `https://${url}`
-            }
-        }
-    }
-}
-function buildStaticUrl(url, path, corp) {
-    if (determineDomainType() === 'singleDomain') {
-        url = url.replace('https://', 'http://');
-        url = `${url}.g5static.com`;
-        if (path.length <= 0 || corp) {
-            return `${url}`;
-        } else {
-            return `${url}/${path}`;
-        }
-    } else if (determineDomainType() === 'multiDomain') {
-        if (url == null || url == undefined) {
-            return 'undefined'
-        } else {
-            let urlParts = url.split('.');
-            if (urlParts.length < 3 && !url.includes('www.')) {
-                return `http://www.${url}.g5static.com`;
-            } else if (urlParts.length >= 3) {
-                return `http://${url}.g5static.com`;
-            }
-        }
-    }
-}
-
-function buildStagingUrl(url, path, corp) {
-    if (url == null || url == undefined) {
-        return 'undefined'
+    if (domainType === "multiDomain") {
+      base.url = location.naked_domain;
     } else {
-        let tld = extractTLD(url);
-        let domainName = extractDomainName(url);
-        let subDomain = extractSubdomain(url);
-        if (subDomain.length > 0) {
-            url = `http://${subDomain}.${domainName}-staging.${tld}.g5static.com`;
-        } else {
-            url = `http://www.${domainName}-staging.${tld}.g5static.com`;
-        }
-        if (determineDomainType() === 'singleDomain') {
-            if (corp) {
-                return `${url}`;
-            } else {
-                if (path.length > 0) {
-                    return `${url}/${path}`;
-                } else {
-                    return `${url}`;
-                }
-            }
-        } else if (determineDomainType() === 'multiDomain') {
-            return url;
-        }
+      base.url = domain;
+      const verticalSegment = location.custom_vertical || vertical;
+      base.path = removeSpecialChars(
+        `${verticalSegment}/${location.state}/${location.city}/${location.custom_slug}`.toLowerCase()
+      );
     }
+
+    return base;
+  });
+}
+
+function buildLiveUrl(url, path, corp, domainType) {
+  if (domainType === "singleDomain") {
+    return !path || corp ? url : `${url}/${path}`;
+  } else {
+    if (!url) return "undefined";
+    const hasSubdomain = url.split(".").length >= 3 || url.includes("www.");
+    return hasSubdomain ? `https://${url}` : `https://www.${url}`;
+  }
+}
+
+function buildStaticUrl(url, path, corp, domainType) {
+  if (!url) return "undefined";
+
+  if (domainType === "singleDomain") {
+    url = url.replace("https://", "http://") + ".g5static.com";
+    return !path || corp ? url : `${url}/${path}`;
+  } else {
+    const hasSubdomain = url.split(".").length >= 3 || url.includes("www.");
+    return hasSubdomain
+      ? `http://${url}.g5static.com`
+      : `http://www.${url}.g5static.com`;
+  }
+}
+
+function buildStagingUrl(url, path, corp, domainType) {
+  if (!url) return "undefined";
+
+  const tld = extractTLD(url);
+  const domainName = extractDomainName(url);
+  const subDomain = extractSubdomain(url);
+
+  let baseUrl = subDomain
+    ? `http://${subDomain}.${domainName}-staging.${tld}.g5static.com`
+    : `http://www.${domainName}-staging.${tld}.g5static.com`;
+
+  if (domainType === "singleDomain") {
+    return !path || corp ? baseUrl : `${baseUrl}/${path}`;
+  } else {
+    return baseUrl;
+  }
 }
 
 async function buildUrls() {
-    let jsonData = await fetchDataRecursive();
-    let locations = parseData(jsonData);
+  const domainType = determineDomainType();
+  const vertical = determineVertical();
+  const domain = clientData.domain;
 
-    console.log(locations);
+  const jsonData = await fetchDataRecursive();
+  const locations = parseData(jsonData, domainType, vertical, domain);
 
-    let finalLocInfo = [];
-    locations.forEach((location) => {
-        let locationInfo = {
-            name: location.name,
-            internalName: location.internalName,
-            status: location.status,
-            liveUrl: buildLiveUrl(location.url, location.path, location.isCorp),
-            staticUrl: buildStaticUrl(location.url, location.path, location.isCorp),
-            stagingUrl: buildStagingUrl(location.url, location.path, location.isCorp)
-        };
-        if (location.isCorp) {
-            finalLocInfo.unshift(locationInfo);
-        } else {
-            finalLocInfo.push(locationInfo);
-        }
-    });
-    return finalLocInfo;
+  return locations.map((location) => {
+    const info = {
+      name: location.name,
+      internalName: location.internalName,
+      status: location.status,
+      liveUrl: buildLiveUrl(
+        location.url,
+        location.path,
+        location.isCorp,
+        domainType
+      ),
+      staticUrl: buildStaticUrl(
+        location.url,
+        location.path,
+        location.isCorp,
+        domainType
+      ),
+      stagingUrl: buildStagingUrl(
+        location.url,
+        location.path,
+        location.isCorp,
+        domainType
+      ),
+    };
+    return location.isCorp ? { ...info, isCorporate: true } : info;
+  });
 }
 
 async function createHtmlPage() {
-    let locInfo = await buildUrls();
-    console.log(locInfo);
+  let locInfo = await buildUrls();
+  console.log(locInfo);
 
-    var newWindow = window.open();
-    var htmlContent = `<!DOCTYPE html><html><head>
+  var newWindow = window.open();
+  var htmlContent = `<!DOCTYPE html><html><head>
       <title>Scraped - ${clientData.name}</title>
       <link rel="icon" type="image/x-icon" href="https://g5-assets-cld-res.cloudinary.com/image/upload/q_auto,f_auto,fl_lossy/e_colorize,co_white/v1686244719/g5/g5-c-5jqt5m1l7-g5-wis-team-cms/g5-cl-1lshjewwoa-g5-wis-team-cms-test-bed-bend-or/uploads/scraper_zjeifx.png">
       <style>
@@ -570,49 +541,62 @@ async function createHtmlPage() {
                     <th class="table-header"><div class="header-cell">Static Urls<button onclick="copyAllStaticUrls()">Copy All</button></div></th>
                     <th class="table-header"><div class="header-cell">Staging Urls<button onclick="copyAllStagingUrls()">Copy All</button></div></th>
                 </tr>`;
-    locInfo.forEach((location) => {
-        console.log(location);
-        if (location.liveUrl === 'undefined' || location.liveUrl === undefined || location.liveUrl === null) {
-            if (location.status === 'Live') {
-                htmlContent += `<tr class="undefinedLocation liveLocation">`;
-            } else if (location.status === 'Pending') {
-                htmlContent += `<tr class="undefinedLocation pendingLocation">`;
-            } else if (location.status === 'Deleted') {
-                htmlContent += `<tr class="undefinedLocation deletedLocation">`;
-            } else {
-                htmlContent += `<tr>`;
-            }
-        } else {
-            if (location.status === 'Live') {
-                htmlContent += `<tr class="liveLocation">`;
-            } else if (location.status === 'Pending') {
-                htmlContent += `<tr class="pendingLocation">`;
-            } else if (location.status === 'Deleted') {
-                htmlContent += `<tr class="deletedLocation">`;
-            } else {
-                htmlContent += `<tr>`;
-            }
-        }
+  locInfo.forEach((location) => {
+    console.log(location);
+    if (
+      location.liveUrl === "undefined" ||
+      location.liveUrl === undefined ||
+      location.liveUrl === null
+    ) {
+      if (location.status === "Live") {
+        htmlContent += `<tr class="undefinedLocation liveLocation">`;
+      } else if (location.status === "Pending") {
+        htmlContent += `<tr class="undefinedLocation pendingLocation">`;
+      } else if (location.status === "Deleted") {
+        htmlContent += `<tr class="undefinedLocation deletedLocation">`;
+      } else {
+        htmlContent += `<tr>`;
+      }
+    } else {
+      if (location.status === "Live") {
+        htmlContent += `<tr class="liveLocation">`;
+      } else if (location.status === "Pending") {
+        htmlContent += `<tr class="pendingLocation">`;
+      } else if (location.status === "Deleted") {
+        htmlContent += `<tr class="deletedLocation">`;
+      } else {
+        htmlContent += `<tr>`;
+      }
+    }
 
-        htmlContent += `<td><div class="statusCell">${location.status}</div></td>`;
-        htmlContent += `<td><div class="nameCell"><input class="nameCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.name}"></input><span class="info">${location.name}</span><button onclick="copyToClipboard('${location.name}')">Copy</button></div></td>`;
-        if (location.internalName === 'undefined' || location.internalName === undefined || location.internalName === null || location.internalName === '') {
-            htmlContent += `<td><div class="internalNameCell"></div></td>`;
-        } else {
-            htmlContent += `<td><div class="internalNameCell"><input class="internalNameCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.internalName}"></input><span class="info">${location.internalName}</span><button onclick="copyToClipboard('${location.internalName}')">Copy</button></div></td>`;
-        }
-        if (location.liveUrl === 'undefined' || location.liveUrl === undefined || location.liveUrl === null) {
-            htmlContent += `<td><div class="undefined liveCell urlCell"><input class="liveUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
-            htmlContent += `<td><div class="undefined staticCell urlCell"><input class="staticUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
-            htmlContent += `<td><div class="undefined stagingCell urlCell"><input class="stagingUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
-        } else {
-            htmlContent += `<td><div class="liveCell urlCell"><input class="liveUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.liveUrl}"></input><span class="info"><a href="${location.liveUrl}" target="_blank">${location.liveUrl}</a></span><button onclick="copyToClipboard('${location.liveUrl}')">Copy</button></div></td>`;
-            htmlContent += `<td><div class="staticCell urlCell"><input class="staticUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.staticUrl}"></input><span class="info"><a href="${location.staticUrl}" target="_blank">${location.staticUrl}</a></span><button onclick="copyToClipboard('${location.staticUrl}')">Copy</button></div></td>`;
-            htmlContent += `<td><div class="stagingCell urlCell"><input class="stagingUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.stagingUrl}"></input><span class="info"><a href="${location.stagingUrl}" target="_blank">${location.stagingUrl}</a></span><button onclick="copyToClipboard('${location.stagingUrl}')">Copy</button></div></td>`;
-        }
-        htmlContent += `</tr>`;
-    });
-    htmlContent += `</table>
+    htmlContent += `<td><div class="statusCell">${location.status}</div></td>`;
+    htmlContent += `<td><div class="nameCell"><input class="nameCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.name}"></input><span class="info">${location.name}</span><button onclick="copyToClipboard('${location.name}')">Copy</button></div></td>`;
+    if (
+      location.internalName === "undefined" ||
+      location.internalName === undefined ||
+      location.internalName === null ||
+      location.internalName === ""
+    ) {
+      htmlContent += `<td><div class="internalNameCell"></div></td>`;
+    } else {
+      htmlContent += `<td><div class="internalNameCell"><input class="internalNameCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.internalName}"></input><span class="info">${location.internalName}</span><button onclick="copyToClipboard('${location.internalName}')">Copy</button></div></td>`;
+    }
+    if (
+      location.liveUrl === "undefined" ||
+      location.liveUrl === undefined ||
+      location.liveUrl === null
+    ) {
+      htmlContent += `<td><div class="undefined liveCell urlCell"><input class="liveUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
+      htmlContent += `<td><div class="undefined staticCell urlCell"><input class="staticUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
+      htmlContent += `<td><div class="undefined stagingCell urlCell"><input class="stagingUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
+    } else {
+      htmlContent += `<td><div class="liveCell urlCell"><input class="liveUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.liveUrl}"></input><span class="info"><a href="${location.liveUrl}" target="_blank">${location.liveUrl}</a></span><button onclick="copyToClipboard('${location.liveUrl}')">Copy</button></div></td>`;
+      htmlContent += `<td><div class="staticCell urlCell"><input class="staticUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.staticUrl}"></input><span class="info"><a href="${location.staticUrl}" target="_blank">${location.staticUrl}</a></span><button onclick="copyToClipboard('${location.staticUrl}')">Copy</button></div></td>`;
+      htmlContent += `<td><div class="stagingCell urlCell"><input class="stagingUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.stagingUrl}"></input><span class="info"><a href="${location.stagingUrl}" target="_blank">${location.stagingUrl}</a></span><button onclick="copyToClipboard('${location.stagingUrl}')">Copy</button></div></td>`;
+    }
+    htmlContent += `</tr>`;
+  });
+  htmlContent += `</table>
         </div>
         <div class="rp_disclaimer">
         <p>REALPAGE INTERNAL USE ONLY</p>
@@ -831,15 +815,15 @@ async function createHtmlPage() {
         }
     }
     </script></body></html>`;
-    clearAlert();
-    newWindow.document.open();
-    newWindow.document.write(htmlContent);
-    newWindow.document.close();
+  clearAlert();
+  newWindow.document.open();
+  newWindow.document.write(htmlContent);
+  newWindow.document.close();
 }
 if (!isClientHubPage()) {
-    console.error('Please make sure you\'re on the G5 Location page.');
-    window.alert('Please make sure you\'re on the G5 Location page.');
+  console.error("Please make sure you're on the G5 client Hub page.");
+  window.alert("Please make sure you're on the G5 client Hub page.");
 } else {
-    createHtmlPage();
-    functionStartAlert();
+  createHtmlPage();
+  functionStartAlert();
 }
