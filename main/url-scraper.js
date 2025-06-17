@@ -289,8 +289,7 @@ async function buildUrls() {
 }
 
 async function createHtmlPage() {
-
-    const start = performance.now();
+  const start = performance.now();
   const locInfo = await buildUrls();
   // console.log(locInfo);
 
@@ -850,7 +849,7 @@ div#searchInputRegex:hover {
   newWindow.document.open();
   newWindow.document.write(htmlContent);
   newWindow.document.close();
-   const end = performance.now();
+  const end = performance.now();
   console.log(`✅ Total time: ${(end - start).toFixed(2)} ms`);
 }
 
@@ -858,8 +857,6 @@ if (!isClientHubPage()) {
   console.error("Please make sure you're on the G5 client Hub page.");
   window.alert("Please make sure you're on the G5 client Hub page.");
 } else {
-
   createHtmlPage();
   functionStartAlert();
- 
 }
