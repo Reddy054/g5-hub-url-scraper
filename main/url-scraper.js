@@ -632,6 +632,9 @@ if (!isClientHubPage()) {
   console.error("Please make sure you're on the G5 client Hub page.");
   window.alert("Please make sure you're on the G5 client Hub page.");
 } else {
+  const start = performance.now();
   createHtmlPage();
   functionStartAlert();
+   const end = performance.now();
+    console.log(`✅ Total time: ${(end - start).toFixed(2)} ms`);
 }
