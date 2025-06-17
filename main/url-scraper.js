@@ -368,7 +368,7 @@ async function createHtmlPage() {
     <head>
       <title>Scraped - ${clientData.name}</title>
       <link rel="icon" type="image/x-icon" href="https://g5-assets-cld-res.cloudinary.com/image/upload/q_auto,f_auto,fl_lossy/e_colorize,co_white/v1686244719/g5/g5-c-5jqt5m1l7-g5-wis-team-cms/g5-cl-1lshjewwoa-g5-wis-team-cms-test-bed-bend-or/uploads/scraper_zjeifx.png">
-     <link rel="stylesheet" href="./url-scraper.css">
+     <link rel="stylesheet" href="https://github.com/Reddy054/g5-hub-url-scraper/blob/main/main/url-scraper.css">
     </head>
     <body>
       <h1>Scraped - ${clientData.name}</h1>
