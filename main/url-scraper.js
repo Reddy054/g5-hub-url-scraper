@@ -1,61 +1,63 @@
 function functionStartAlert() {
   const alertDiv = document.createElement("div");
-  alertDiv.setAttribute("id", "alertDiv");
+  alertDiv.id = "alertDiv";
+  alertDiv.className = "hub-scraper-alert";
 
-  let firstDiv = document.querySelector("body").firstElementChild;
-  document.body.insertBefore(alertDiv, firstDiv);
+  document.body.insertBefore(alertDiv, document.body.firstElementChild);
 
-  let alertText = document.createElement("p");
-  alertText.innerHTML =
-    'Hub Scraper started<br>It may take some time!<br>This alert will disappear when it is finised.<br><div class="cssLoader"></div>';
+  alertDiv.innerHTML = `
+    <p>
+      Hub Scraper started<br>
+      It may take some time!<br>
+      This alert will disappear when it is finished.<br>
+      <div class="cssLoader"></div>
+    </p>
+  `;
 
-  alertDiv.appendChild(alertText);
-  alertText.style.margin = "0";
-  alertDiv.style.fontFamily = '"Open Sans", sans-serif';
-  alertDiv.style.position = "fixed";
-  alertDiv.style.top = "2em";
-  alertDiv.style.right = "1em";
-  alertDiv.style.zIndex = "999";
-  alertDiv.style.textAlign = "center";
-  alertDiv.style.borderRadius = "2px";
-  alertDiv.style.minHeight = "48px";
-  alertDiv.style.lineHeight = "1.5em";
-  alertDiv.style.padding = "1.5em";
-  alertDiv.style.boxShadow =
-    "0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12), 0 3px 1px -2px rgba(0, 0, 0, .2)";
-  alertDiv.style.maxHeight = "150px";
-  alertDiv.style.maxWidth = "400px";
-  alertDiv.style.fontSize = "15px";
-  alertDiv.style.color = "white";
-  alertDiv.style.backgroundColor = "rgb(163, 190, 140)";
-  alertDiv.style.cursor = "pointer";
-  alertDiv.style.transition = "opacity 3s ease-in-out";
-  alertDiv.style.opacity = "1";
-
-  alertDiv.addEventListener("click", () => {
-    alertDiv.remove();
+  Object.assign(alertDiv.style, {
+    fontFamily: '"Open Sans", sans-serif',
+    position: "fixed",
+    top: "2em",
+    right: "1em",
+    zIndex: "999",
+    textAlign: "center",
+    borderRadius: "4px",
+    minHeight: "48px",
+    lineHeight: "1.5em",
+    padding: "1.5em",
+    boxShadow:
+      "0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12), 0 3px 1px -2px rgba(0, 0, 0, .2)",
+    maxWidth: "400px",
+    fontSize: "15px",
+    color: "#fff",
+    backgroundColor: "rgb(163, 190, 140)",
+    cursor: "pointer",
+    transition: "opacity 1s ease-in-out",
+    opacity: "1",
   });
 
-  var css = `.cssLoader {
+  alertDiv.addEventListener("click", () => alertDiv.remove());
+
+  if (!document.getElementById("hubScraperStyle")) {
+    const style = document.createElement("style");
+    style.id = "hubScraperStyle";
+    style.textContent = `
+      .cssLoader {
         border: 4px solid #f3f3f3;
         border-top: 4px solid #3498db;
         border-radius: 50%;
         width: 30px;
         height: 30px;
         animation: spin 2s linear infinite;
-        margin-inline: auto;
-        margin-top: 1em;
-    }
-      
+        margin: 1em auto 0;
+      }
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
-      }`,
-    head = document.head || document.getElementsByTagName("head")[0],
-    style = document.createElement("style");
-  head.appendChild(style);
-  style.type = "text/css";
-  style.appendChild(document.createTextNode(css));
+      }
+    `;
+    document.head.appendChild(style);
+  }
 }
 
 function clearAlert() {
@@ -86,33 +88,47 @@ if (isClientHubPage()) {
 }
 
 async function fetchDataRecursive() {
-  let pageIteration = 1;
-  let locationsJsonUrl = `https://hub.g5marketingcloud.com/admin/clients/${clientData.urn}/locations.json?order=name_asc&page=${pageIteration}`;
+  const pageSize = 50;
+  const BATCH_SIZE = 5;
 
-  async function getJsonData(url) {
-    let fetchResult = await fetch(url);
-    if (!fetchResult.ok) {
-      throw new Error(
-        `Error fetching data from ${url}: ${fetchResult.status} ${fetchResult.statusText}`
-      );
+  let allData = [];
+  let page = 1;
+  let keepGoing = true;
+
+  while (keepGoing) {
+    const urls = Array.from(
+      { length: BATCH_SIZE },
+      (_, i) =>
+        `https://hub.g5marketingcloud.com/admin/clients/${
+          clientData.urn
+        }/locations.json?order=name_asc&page=${page + i}`
+    );
+
+    const batchResults = await Promise.all(
+      urls.map((url) =>
+        fetch(url)
+          .then((res) => {
+            if (!res.ok) throw new Error(`Error fetching ${url}`);
+            return res.json();
+          })
+          .catch((err) => {
+            console.error(err);
+            return [];
+          })
+      )
+    );
+
+    batchResults.forEach((pageData) => allData.push(...pageData));
+
+    const lastPageData = batchResults[batchResults.length - 1];
+    if (!lastPageData || lastPageData.length === 0) {
+      keepGoing = false;
+    } else {
+      page += BATCH_SIZE;
     }
-    let json = await fetchResult.json();
-    return json;
   }
 
-  async function fetchAndStoreData(url, jsonData = [], pageIteration) {
-    try {
-      let json = await getJsonData(url);
-      jsonData.push(...json);
-      pageIteration++;
-      let nextUrl = `https://hub.g5marketingcloud.com/admin/clients/${clientData.urn}/locations.json?order=name_asc&page=${pageIteration}`;
-      return fetchAndStoreData(nextUrl, jsonData, pageIteration);
-    } catch (error) {
-      console.error(error);
-    }
-    return jsonData;
-  }
-  return fetchAndStoreData(locationsJsonUrl, [], pageIteration);
+  return allData;
 }
 
 function removeSpecialChars(str) {
@@ -286,340 +302,127 @@ async function buildUrls() {
 }
 
 async function createHtmlPage() {
-  let locInfo = await buildUrls();
-  console.log(locInfo);
+  const locInfo = await buildUrls();
+  // console.log(locInfo);
 
-  var newWindow = window.open();
-  var htmlContent = `<!DOCTYPE html><html><head>
+  const newWindow = window.open();
+
+  const rows = [];
+
+  locInfo.forEach((location) => {
+    const isUndefined = !location.liveUrl || location.liveUrl === "undefined";
+    const status = location.status || "Unknown";
+    const statusClass = `${
+      isUndefined ? "undefinedLocation " : ""
+    }${status.toLowerCase()}Location`;
+
+    const safe = (val) => (!val || val === "undefined" ? "undefined" : val);
+    const link = (val) =>
+      safe(val) === "undefined"
+        ? `<span class="info">undefined</span>`
+        : `<span class="info"><a href="${val}" target="_blank">${val}</a></span>`;
+
+    rows.push(`
+      <tr class="${statusClass}">
+        <td><div class="statusCell">${status}</div></td>
+        <td><div class="nameCell">
+          <input class="nameCheckbox" type="checkbox" onchange="createCheckboxArray(this)" value="${
+            location.name
+          }">
+          <span class="info">${location.name}</span>
+          <button onclick="copyToClipboard('${location.name}')">Copy</button>
+        </div></td>
+        <td><div class="internalNameCell">
+          ${
+            safe(location.internalName) === "undefined"
+              ? ""
+              : `
+            <input class="internalNameCheckbox" type="checkbox" onchange="createCheckboxArray(this)" value="${location.internalName}">
+            <span class="info">${location.internalName}</span>
+            <button onclick="copyToClipboard('${location.internalName}')">Copy</button>
+          `
+          }
+        </div></td>
+        <td><div class="liveCell urlCell">
+          <input class="liveUrlCheckbox" type="checkbox" onchange="createCheckboxArray(this)" value="${safe(
+            location.liveUrl
+          )}">
+          ${link(location.liveUrl)}
+          <button onclick="copyToClipboard('${safe(
+            location.liveUrl
+          )}')">Copy</button>
+        </div></td>
+        <td><div class="staticCell urlCell">
+          <input class="staticUrlCheckbox" type="checkbox" onchange="createCheckboxArray(this)" value="${safe(
+            location.staticUrl
+          )}">
+          ${link(location.staticUrl)}
+          <button onclick="copyToClipboard('${safe(
+            location.staticUrl
+          )}')">Copy</button>
+        </div></td>
+        <td><div class="stagingCell urlCell">
+          <input class="stagingUrlCheckbox" type="checkbox" onchange="createCheckboxArray(this)" value="${safe(
+            location.stagingUrl
+          )}">
+          ${link(location.stagingUrl)}
+          <button onclick="copyToClipboard('${safe(
+            location.stagingUrl
+          )}')">Copy</button>
+        </div></td>
+      </tr>
+    `);
+  });
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
       <title>Scraped - ${clientData.name}</title>
       <link rel="icon" type="image/x-icon" href="https://g5-assets-cld-res.cloudinary.com/image/upload/q_auto,f_auto,fl_lossy/e_colorize,co_white/v1686244719/g5/g5-c-5jqt5m1l7-g5-wis-team-cms/g5-cl-1lshjewwoa-g5-wis-team-cms-test-bed-bend-or/uploads/scraper_zjeifx.png">
-      <style>
-        :root {
-            --primary-clr: #BBD9EC;
-            --primary-clr-lighten: #DCEBF4;
-            --background-clr: #111;
-        }
-        body {
-            font-family: sans-serif;
-            background-color: #111;
-            color: #fefefe;
-        }
-        h1 {
-            margin: 0 auto;
-            text-align: center;
-            max-width: 50ch;
-        }
-        .urlCell a {
-            line-break: anywhere;
-        }
-        a {
-            color: var(--primary-clr);
-        }
-        a:hover {
-            color: var(--primary-clr-lighten);
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        td:not(:has(> div.statusCell)) {
-            min-width: 19ch;
-        }
-        table td, table th {
-            border: 2px solid #fff;
-            padding: 0.5em;
-            margin: 0;
-        }
-        table th {
-            font-size: 1.25em;
-        }
-        th button {
-            margin-left: 1em;
-        }
-        tr {
-            transition: background-color 0.2s ease-in-out;
-        }
-        tr:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            transition: background-color 0.1s ease-in-out;
-        }
-        button {
-            height: fit-content;
-            background: transparent;
-            border: 1px solid #fff;
-            color: #fff;
-            border-radius: 4px;
-            padding: 0.25em;
-            display: inline;
-            transition: all 0.25s ease-in-out;
-            user-select: none;
-            -moz-user-select: none;
-            -khtml-user-select: none;
-            -webkit-user-select: none;
-            -o-user-select: none;
-        }
-        button:hover {
-            background: var(--primary-clr);
-            border: 1px solid #fff;
-            color: #111;
-            transition: all 0.25s ease-in-out;
-        }
-        .urlContainer {
-            max-width: 95vw;
-            width: 100%;
-            margin: 0 auto;
-        }
-        .rp_disclaimer {
-            display: flex;
-            justify-content: center;
-        }
-        div.rp_disclaimer p {
-            color: #fff;
-            letter-spacing: 2px;
-            bottom: 5px;
-            border-radius: 20px;
-            border: 1px solid #fff;
-            padding: 1em;
-            background-color: transparent;
-            font-size: 0.65em;
-            margin-top: 1em;
-        }
-        .credits {
-            font-size: 0.45em;
-            color: #fff;
-        }
-        td div {
-            display: flex;
-            align-items: center;
-        }
-        .nameCell button, .urlCell button, .undefinedDiv button, .internalNameCell button {
-            margin-left: auto;
-            margin-right: 0;
-        }
-        div.headerButton button {
-            font-size: 1.1em;
-            position: relative;
-            margin: 0.5em 0;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .legend {
-            width: fit-content;
-            position: absolute;
-            top: 7px;
-            left: 3vw;
-        }
-        th div.header-cell {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        p {
-            margin: 0;
-            padding: 0.5em;
-        }
-        .stickyNavHoverDiv {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            height: 123px;
-            width: 25px;
-        }
-        .sticky-nav {
-            position: fixed;
-            opacity: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            width: 50px;
-            height: 103px;
-            right: 10px;
-            bottom: 10px;
-            background-color: var(--primary-clr);
-            border-radius: 27px;
-            padding: 5px;
-            transform: translateX(70px);
-            transition: 0.5s transform ease-in-out, 5s opacity ease-in-out;
-        }
-        .stickyNavHoverDiv:hover .sticky-nav {
-            opacity: 1;
-            right: 10px;
-            transform: translateX(0px);
-            transition: 0.5s transform ease-in-out;
-        }
-        .sticky-nav div {
-            width: 46px;
-            height: 46px;
-            background-color: #58798D;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 50px;
-            border-radius: 50%;
-            color: #fff;
-            cursor: pointer;
-            transition: 0.15s all ease-in-out;
-        }
-        .sticky-nav div:hover {
-            color: #303030;
-            background-color: #30a4b3;
-            transition: 0.15s all ease-in-out;
-        }
-        .stickyNavHoverDiv .pullout-bar {
-            position: absolute;
-            bottom: 37.5px;
-            right: 65px;
-            background-color: var(--primary-clr);
-            clip-path: polygon(30% 0, 100% 0, 100% 100%, 30% 100%, 0% 85%, 0% 15%);
-            height: 50px;
-            width: 25px;
-            transform: translateX(70px);
-            transition: 0.5s transform ease-in-out;
-        }
-        .stickyNavHoverDiv:hover .pullout-bar {
-            transform: translateX(25px);
-            transition: 0.5s transform ease-in-out;
-        }
-        .pullout-bar div {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            height: 50%;
-            width: 10%;
-            background-color: rgba(51, 51, 51, 0.65);
-        }
-        .pullout-bar div:first-of-type {
-            left: 25%;
-        }
-        .searchInputContainer {
-            display: flex;
-            position: absolute;
-            justify-content: end;
-            align-items: center;
-            width: fit-content;
-            right: 3vw;
-        }
-        .searchInputContainer > label[for="searchInput"] {
-            margin-right: 1ch;
-        }
-        div#searchInputRegex {
-            height: 1em;
-            width: 1em;
-            text-align: center;
-            border: 1px solid white;
-            border-radius: 2px;
-            margin-left: 0.25ch;
-            padding: 0.15em;
-            font-size: 0.85em;
-            transition: all 0.25s ease-in-out;
-        }
-        div#searchInputRegex:hover {
-            cursor: pointer;
-            color: #000;
-            background-color: var(--primary-clr);
-            transition: all 0.25s ease-in-out;
-        }
-        .searchInputContainer > input#searchInput {
-            min-width: 20ch;
-        }
-      </style>
+     <link rel="stylesheet" href="./url-scraper.css">
     </head>
     <body>
-        <h1>Scraped - ${clientData.name}</h1>
-        <form class="searchInputContainer"><label for="searchInput">Search: </label><input id="searchInput" type="text"><div id="searchInputRegex" data-value="unchecked" title="Enable Regex">.*</div></form>
-        <div class="headerButton">
-            <button onclick="copySelectedUrls()">Copy Selected Cells</button>
-        </div>
-        <div class="urlContainer">
-            <table>
-                <tr class="header">
-                    <th class="table-header"><div class="header-cell">Status</div></th>
-                    <th class="table-header"><div class="header-cell">Name<button onclick="copyAllNames()">Copy All</button></div></th>
-                    <th class="table-header"><div class="header-cell">Internal Name<button onclick="copyAllInternalNames()">Copy All</button></div></th>
-                    <th class="table-header"><div class="header-cell">Live Urls<button onclick="copyAllLiveUrls()">Copy All</button></div></th>
-                    <th class="table-header"><div class="header-cell">Static Urls<button onclick="copyAllStaticUrls()">Copy All</button></div></th>
-                    <th class="table-header"><div class="header-cell">Staging Urls<button onclick="copyAllStagingUrls()">Copy All</button></div></th>
-                </tr>`;
-  locInfo.forEach((location) => {
-    console.log(location);
-    if (
-      location.liveUrl === "undefined" ||
-      location.liveUrl === undefined ||
-      location.liveUrl === null
-    ) {
-      if (location.status === "Live") {
-        htmlContent += `<tr class="undefinedLocation liveLocation">`;
-      } else if (location.status === "Pending") {
-        htmlContent += `<tr class="undefinedLocation pendingLocation">`;
-      } else if (location.status === "Deleted") {
-        htmlContent += `<tr class="undefinedLocation deletedLocation">`;
-      } else {
-        htmlContent += `<tr>`;
-      }
-    } else {
-      if (location.status === "Live") {
-        htmlContent += `<tr class="liveLocation">`;
-      } else if (location.status === "Pending") {
-        htmlContent += `<tr class="pendingLocation">`;
-      } else if (location.status === "Deleted") {
-        htmlContent += `<tr class="deletedLocation">`;
-      } else {
-        htmlContent += `<tr>`;
-      }
-    }
-
-    htmlContent += `<td><div class="statusCell">${location.status}</div></td>`;
-    htmlContent += `<td><div class="nameCell"><input class="nameCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.name}"></input><span class="info">${location.name}</span><button onclick="copyToClipboard('${location.name}')">Copy</button></div></td>`;
-    if (
-      location.internalName === "undefined" ||
-      location.internalName === undefined ||
-      location.internalName === null ||
-      location.internalName === ""
-    ) {
-      htmlContent += `<td><div class="internalNameCell"></div></td>`;
-    } else {
-      htmlContent += `<td><div class="internalNameCell"><input class="internalNameCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.internalName}"></input><span class="info">${location.internalName}</span><button onclick="copyToClipboard('${location.internalName}')">Copy</button></div></td>`;
-    }
-    if (
-      location.liveUrl === "undefined" ||
-      location.liveUrl === undefined ||
-      location.liveUrl === null
-    ) {
-      htmlContent += `<td><div class="undefined liveCell urlCell"><input class="liveUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
-      htmlContent += `<td><div class="undefined staticCell urlCell"><input class="staticUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
-      htmlContent += `<td><div class="undefined stagingCell urlCell"><input class="stagingUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="undefined"></input><span class="info">undefined</span><button onclick="copyToClipboard('undefined')">Copy</button></div></td>`;
-    } else {
-      htmlContent += `<td><div class="liveCell urlCell"><input class="liveUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.liveUrl}"></input><span class="info"><a href="${location.liveUrl}" target="_blank">${location.liveUrl}</a></span><button onclick="copyToClipboard('${location.liveUrl}')">Copy</button></div></td>`;
-      htmlContent += `<td><div class="staticCell urlCell"><input class="staticUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.staticUrl}"></input><span class="info"><a href="${location.staticUrl}" target="_blank">${location.staticUrl}</a></span><button onclick="copyToClipboard('${location.staticUrl}')">Copy</button></div></td>`;
-      htmlContent += `<td><div class="stagingCell urlCell"><input class="stagingUrlCheckbox" type="checkBox" onchange="createCheckboxArray(this)" value="${location.stagingUrl}"></input><span class="info"><a href="${location.stagingUrl}" target="_blank">${location.stagingUrl}</a></span><button onclick="copyToClipboard('${location.stagingUrl}')">Copy</button></div></td>`;
-    }
-    htmlContent += `</tr>`;
-  });
-  htmlContent += `</table>
-        </div>
-        <div class="rp_disclaimer">
-        <p>REALPAGE INTERNAL USE ONLY</p>
-    </div>
-    <div class="legend">
-        <label for="liveLocationCheck">Enable: </label><input name="liveLocationCheck" id="liveLocationCheck" type="checkbox" checked></input>Live<br>
-        <label for="pendingLocationCheck">Enable: </label><input name="pendingLocationCheck" id="pendingLocationCheck" type="checkbox" checked></input>Pending<br>
-        <label for="deletedLocationCheck">Enable: </label><input name="deletedLocationCheck" id="deletedLocationCheck" type="checkbox"></input>Deleted<br>
-        <label for="undefinedLocationCheck">Enable: </label><input name="undefinedLocationCheck" id="undefinedLocationCheck" type="checkbox"></input>Undefined Domain
-    </div>
-    <div class="credits">
-        <p class="credits-header">Tool created by:</p>
-        <p class="credits-name">Lake Straly</p>
-        <p class="credits-name">Logan Straly</p>
-    </div>
-    <div class="stickyNavHoverDiv">
+      <h1>Scraped - ${clientData.name}</h1>
+      <form class="searchInputContainer">
+        <label for="searchInput">Search:</label>
+        <input id="searchInput" type="text">
+        <div id="searchInputRegex" data-value="unchecked" title="Enable Regex">.*</div>
+      </form>
+      <div class="headerButton">
+        <button onclick="copySelectedUrls()">Copy Selected Cells</button>
+      </div>
+      <div class="urlContainer">
+        <table>
+          <tr class="header">
+            <th><div class="header-cell">Status</div></th>
+            <th><div class="header-cell">Name <button onclick="copyAllNames()">Copy All</button></div></th>
+            <th><div class="header-cell">Internal Name <button onclick="copyAllInternalNames()">Copy All</button></div></th>
+            <th><div class="header-cell">Live Urls <button onclick="copyAllLiveUrls()">Copy All</button></div></th>
+            <th><div class="header-cell">Static Urls <button onclick="copyAllStaticUrls()">Copy All</button></div></th>
+            <th><div class="header-cell">Staging Urls <button onclick="copyAllStagingUrls()">Copy All</button></div></th>
+          </tr>
+          ${rows.join("")}
+        </table>
+      </div>
+      <div class="rp_disclaimer"><p>REALPAGE INTERNAL USE ONLY</p></div>
+      <div class="legend">
+        <label><input type="checkbox" id="liveLocationCheck" checked> Live</label><br>
+        <label><input type="checkbox" id="pendingLocationCheck" checked> Pending</label><br>
+        <label><input type="checkbox" id="deletedLocationCheck"> Deleted</label><br>
+        <label><input type="checkbox" id="undefinedLocationCheck"> Undefined</label>
+      </div>
+      <div class="credits">
+        <p>Tool created by: Lake & Logan Straly</p>
+      </div>
+      <div class="stickyNavHoverDiv">
         <div class="pullout-bar"><div></div><div></div></div>
         <div class="sticky-nav">
-            <div class="up-arrow">&#8593</div>
-            <div class="down-arrow">&#8595</div>
+          <div class="up-arrow">&#8593;</div>
+          <div class="down-arrow">&#8595;</div>
         </div>
-    </div>
-    <script type="text/javascript">
+      </div>
+      <script type="text/javascript">
     let searchValue = '';
     function copyAllNames() {
         let namesArr = document.querySelectorAll('tr:not(.disabled) .nameCell .info');
@@ -814,12 +617,17 @@ async function createHtmlPage() {
             updateLocationLinks();
         }
     }
-    </script></body></html>`;
+    </script>
+    </body>
+    </html>
+  `;
+
   clearAlert();
   newWindow.document.open();
   newWindow.document.write(htmlContent);
   newWindow.document.close();
 }
+
 if (!isClientHubPage()) {
   console.error("Please make sure you're on the G5 client Hub page.");
   window.alert("Please make sure you're on the G5 client Hub page.");
