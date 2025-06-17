@@ -63,8 +63,9 @@ function functionStartAlert() {
 function clearAlert() {
   let alertDiv = document.getElementById("alertDiv");
   if (alertDiv) {
-    alertDiv.style.opacity = "0";
-    setTimeout(() => alertDiv.remove(), 1000);
+    // alertDiv.style.opacity = "0";
+    // setTimeout(() => alertDiv.remove(), 1000);
+    alertDiv.remove();
   }
 }
 
