@@ -118,7 +118,6 @@ async function fetchDataRecursive() {
   return fetchAndStoreData(locationsJsonUrl, [], pageIteration);
 }
 
-
 function removeSpecialChars(str) {
   return str
     .replace(/[^A-Za-z0-9/]+/g, "-")
@@ -368,7 +367,242 @@ async function createHtmlPage() {
     <head>
       <title>Scraped - ${clientData.name}</title>
       <link rel="icon" type="image/x-icon" href="https://g5-assets-cld-res.cloudinary.com/image/upload/q_auto,f_auto,fl_lossy/e_colorize,co_white/v1686244719/g5/g5-c-5jqt5m1l7-g5-wis-team-cms/g5-cl-1lshjewwoa-g5-wis-team-cms-test-bed-bend-or/uploads/scraper_zjeifx.png">
-     <link rel="stylesheet" href="https://github.com/Reddy054/g5-hub-url-scraper/blob/main/main/url-scraper.css">
+     <style>
+     :root {
+  --primary-clr: #bbd9ec;
+  --primary-clr-lighten: #dcebf4;
+  --background-clr: #111;
+}
+body {
+  font-family: sans-serif;
+  background-color: #111;
+  color: #fefefe;
+}
+h1 {
+  margin: 0 auto;
+  text-align: center;
+  max-width: 50ch;
+}
+.urlCell a {
+  line-break: anywhere;
+}
+a {
+  color: var(--primary-clr);
+}
+a:hover {
+  color: var(--primary-clr-lighten);
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+td:not(:has(> div.statusCell)) {
+  min-width: 19ch;
+}
+table td,
+table th {
+  border: 2px solid #fff;
+  padding: 0.5em;
+  margin: 0;
+}
+table th {
+  font-size: 1.25em;
+}
+th button {
+  margin-left: 1em;
+}
+tr {
+  transition: background-color 0.2s ease-in-out;
+}
+tr:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.1s ease-in-out;
+}
+button {
+  height: fit-content;
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.25em;
+  display: inline;
+  transition: all 0.25s ease-in-out;
+  user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+}
+button:hover {
+  background: var(--primary-clr);
+  border: 1px solid #fff;
+  color: #111;
+  transition: all 0.25s ease-in-out;
+}
+.urlContainer {
+  max-width: 95vw;
+  width: 100%;
+  margin: 0 auto;
+}
+.rp_disclaimer {
+  display: flex;
+  justify-content: center;
+}
+div.rp_disclaimer p {
+  color: #fff;
+  letter-spacing: 2px;
+  bottom: 5px;
+  border-radius: 20px;
+  border: 1px solid #fff;
+  padding: 1em;
+  background-color: transparent;
+  font-size: 0.65em;
+  margin-top: 1em;
+}
+.credits {
+  font-size: 0.45em;
+  color: #fff;
+}
+td div {
+  display: flex;
+  align-items: center;
+}
+.nameCell button,
+.urlCell button,
+.undefinedDiv button,
+.internalNameCell button {
+  margin-left: auto;
+  margin-right: 0;
+}
+div.headerButton button {
+  font-size: 1.1em;
+  position: relative;
+  margin: 0.5em 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.legend {
+  width: fit-content;
+  position: absolute;
+  top: 7px;
+  left: 3vw;
+}
+th div.header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+p {
+  margin: 0;
+  padding: 0.5em;
+}
+.stickyNavHoverDiv {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  height: 123px;
+  width: 25px;
+}
+.sticky-nav {
+  position: fixed;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 50px;
+  height: 103px;
+  right: 10px;
+  bottom: 10px;
+  background-color: var(--primary-clr);
+  border-radius: 27px;
+  padding: 5px;
+  transform: translateX(70px);
+  transition: 0.5s transform ease-in-out, 5s opacity ease-in-out;
+}
+.stickyNavHoverDiv:hover .sticky-nav {
+  opacity: 1;
+  right: 10px;
+  transform: translateX(0px);
+  transition: 0.5s transform ease-in-out;
+}
+.sticky-nav div {
+  width: 46px;
+  height: 46px;
+  background-color: #58798d;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 50px;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.15s all ease-in-out;
+}
+.sticky-nav div:hover {
+  color: #303030;
+  background-color: #30a4b3;
+  transition: 0.15s all ease-in-out;
+}
+.stickyNavHoverDiv .pullout-bar {
+  position: absolute;
+  bottom: 37.5px;
+  right: 65px;
+  background-color: var(--primary-clr);
+  clip-path: polygon(30% 0, 100% 0, 100% 100%, 30% 100%, 0% 85%, 0% 15%);
+  height: 50px;
+  width: 25px;
+  transform: translateX(70px);
+  transition: 0.5s transform ease-in-out;
+}
+.stickyNavHoverDiv:hover .pullout-bar {
+  transform: translateX(25px);
+  transition: 0.5s transform ease-in-out;
+}
+.pullout-bar div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 50%;
+  width: 10%;
+  background-color: rgba(51, 51, 51, 0.65);
+}
+.pullout-bar div:first-of-type {
+  left: 25%;
+}
+.searchInputContainer {
+  display: flex;
+  position: absolute;
+  justify-content: end;
+  align-items: center;
+  width: fit-content;
+  right: 3vw;
+}
+.searchInputContainer > label[for="searchInput"] {
+  margin-right: 1ch;
+}
+div#searchInputRegex {
+  height: 1em;
+  width: 1em;
+  text-align: center;
+  border: 1px solid white;
+  border-radius: 2px;
+  margin-left: 0.25ch;
+  padding: 0.15em;
+  font-size: 0.85em;
+  transition: all 0.25s ease-in-out;
+}
+div#searchInputRegex:hover {
+  cursor: pointer;
+  color: #000;
+  background-color: var(--primary-clr);
+  transition: all 0.25s ease-in-out;
+}
+.searchInputContainer > input#searchInput {
+  min-width: 20ch;
+}
+
+     </style>
     </head>
     <body>
       <h1>Scraped - ${clientData.name}</h1>
